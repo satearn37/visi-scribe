@@ -1,0 +1,68 @@
+Final Implementation Plan — Next.js-only, VLM-powered
+Stack (final)
+
+Next.js (TypeScript, Tailwind, GSAP) — frontend + API route, one service.
+Lenis dropped — confirmed, no scroll content to justify it.
+VLM API (Gemini or Claude, vision-capable) — does OCR + structuring in one call via a fixed, internal, non-user-facing prompt.
+No FastAPI, no PaddleOCR, no separate backend, no database.
+Hosting: Vercel free tier, single deploy.
+
+Phase 0 — Setup decisions
+
+Pick one VLM provider and confirm its current free-tier limits at build time (these shift, so verify fresh rather than trusting older numbers).
+Get an API key, store as an environment variable in Vercel — never exposed client-side.
+Decide on the access gate now rather than later (see Phase 4) so it's not bolted on awkwardly.
+
+Phase 1 — Core flow
+
+Upload UI — drag-and-drop zone, accepts jpg/png/webp, client-side validation on file type and size (cap ~5-10MB to avoid oversized uploads and wasted calls).
+API route (/api/extract-text) — receives the image, converts to the format the VLM API expects, sends it with the fixed internal instruction, returns the text.
+Result panel — editable textarea (VLM output won't be 100% perfect on messy handwriting, so editing before use matters), plus a copy-to-clipboard button as the actual "time saved" moment.
+
+Phase 2 — The internal instruction (fixed, not user-facing)
+One hardcoded instruction sent with every request, tuned to your actual use case:
+
+Transcribe all visible text — typed and handwritten.
+Where handwriting is genuinely ambiguous, mark uncertain words clearly rather than guessing silently (protects against confidently-wrong text going straight into a client-facing requirements doc).
+Output as a clean, ordered requirements list, preserving any structure already implied in the image (numbering, sections).
+Plan to test this against 5-10 real examples from your actual client screenshots before calling it done — this is the part most worth iterating on.
+
+Phase 3 — Polish
+
+GSAP on three moments only: dropzone hover/drag state, a processing/loading animation during the 2-5s wait, and a reveal transition when results land.
+Keep it scoped — resist the urge to animate everything just because GSAP is in the stack.
+
+Phase 4 — Keeping it free and safe
+
+Simple shared-password gate on the page (basic middleware/session-cookie check) — since your API route calls a metered service, an unlisted-but-fully-public URL is one leaked link away from a stranger burning your free quota. This is worth doing now, not deferring.
+File size cap + disabled-during-processing submit button — prevents accidental quota burn from your own team (e.g., someone re-uploading a batch impatiently).
+Check the provider's usage dashboard occasionally in the first few weeks to confirm real usage sits comfortably inside the free tier.
+
+Phase 5 — Repo structure (final)
+image-to-text-app/
+├── .gitignore
+├── README.md
+├── package.json
+├── next.config.ts
+├── tailwind.config.ts
+├── .env.local.example        # VLM_API_KEY, ACCESS_PASSWORD
+├── public/
+└── src/
+    ├── middleware.ts          # password gate check
+    ├── app/
+    │   ├── page.tsx           # upload UI
+    │   ├── layout.tsx
+    │   ├── globals.css
+    │   └── api/
+    │       └── extract-text/route.ts
+    ├── components/
+    │   └── ui/
+    │       ├── Dropzone.tsx
+    │       ├── ResultPanel.tsx
+    │       └── Loader.tsx
+    ├── hooks/
+    │   └── useExtractText.ts
+    ├── lib/
+    │   └── instruction.ts     # the fixed internal prompt, isolated for easy tuning
+    └── types/
+        └── ocr.ts
