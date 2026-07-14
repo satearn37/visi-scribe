@@ -12,7 +12,7 @@ VisiScribe is a modern, privacy-first web application designed to turn mockups, 
 -  **Privacy-First (Local Keys):** Users can enter their own Gemini API Key. It is stored securely in `localStorage` in the browser, sent directly through headers, and never saved or logged on the server.
 -  **Paste from Clipboard:** Pro-tip features allow you to press `Ctrl+V` to paste screenshots directly from your clipboard into the dropzone.
 -  **Sleek, Modern UI:** High-performance micro-animations powered by **GSAP** paired with a dark glassmorphism design system.
-- ☁️ **Server-Wide Fallback Support:** Administrators can configure a fallback server-side API key so general visitors can use the tool out-of-the-box.
+- **Server-Wide Fallback Support:** Administrators can configure a fallback server-side API key so general visitors can use the tool out-of-the-box.
 
 ---
 
